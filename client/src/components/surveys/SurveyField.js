@@ -2,7 +2,6 @@
 import React from 'react';
 
 export default ({ input, label, meta: { error, touched } }) => {
-  console.log(touched)
   return (
     <div>
       <label>{label}</label>
