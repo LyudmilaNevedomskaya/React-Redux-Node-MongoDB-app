@@ -1,6 +1,7 @@
 // SurveyReview shows users their form inputs for review
 
 import React from "react";
+import { connect } from 'react-redux';
 
 const SurveyReview = (props) => {
   return (
@@ -13,4 +14,9 @@ const SurveyReview = (props) => {
   )
 }
 
-export default SurveyReview;
+function mapStateToProps(state) {
+  //console.log(state.form.surveyForm.values);
+  return { formValues: state.form.surveyForm.values }
+}
+
+export default connect(mapStateToProps)(SurveyReview);
