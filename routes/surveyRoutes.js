@@ -30,7 +30,7 @@ module.exports = app => {
     // const uniqueEvents = _.uniqBy(compactEvents, 'email', 'surveyId');
 
     //REFACTORING USING LODASH CHAIN HELPER
-    const events = _.chain(req.body)
+    _.chain(req.body)
     .map((event) => {
       const match = p.test(new URL(event.url).pathname);
       if (match) {
@@ -41,9 +41,18 @@ module.exports = app => {
     .compact()
     // Remove duplicate records from an array
     .uniqBy('email', 'surveyId')
+    .each(({ surveyId, email, choice }) => {
+      Survey.updateOne({
+        _id: surveyId,
+        recipients: {
+          $elemMatch: {email: email, responded: false}
+        }
+      }, {
+        $inc: { [choice]: 1 },
+        $set: { 'recipients.$.responded': true }
+      }).exec();
+    })
     .value()
-
-    console.log(events);
     
     res.send({});
   })
@@ -75,3 +84,4 @@ module.exports = app => {
     }
   });
 }
+
