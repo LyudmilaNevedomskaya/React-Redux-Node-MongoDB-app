@@ -14,22 +14,37 @@ module.exports = app => {
   });
 
   app.post('/api/surveys/webhooks', (req, res) => {
-    const events = _.map(req.body, (event) => {
-      const pathname = new URL(event.url).pathname;
-      const p = new Path('/api/surveys/:surveyId/:choice');
-      const match = p.test(pathname);
+    const p = new Path('/api/surveys/:surveyId/:choice');
+
+    // const events = _.map(req.body, (event) => {
+    //   const match = p.test(new URL(event.url).pathname);
+    //   if (match) {
+    //     return { email: event.email, surveyId: match.surveyId, choice: match.choice };
+    //   }
+    // });
+    
+    // // Remove all elements from the array that are undefined
+    // const compactEvents = _.compact(events);
+
+    // // Remove duplicate records from an array
+    // const uniqueEvents = _.uniqBy(compactEvents, 'email', 'surveyId');
+
+    //REFACTORING USING LODASH CHAIN HELPER
+    const events = _.chain(req.body)
+    .map((event) => {
+      const match = p.test(new URL(event.url).pathname);
       if (match) {
         return { email: event.email, surveyId: match.surveyId, choice: match.choice };
       }
-    });
-    
+    })
     // Remove all elements from the array that are undefined
-    const compactEvents = _.compact(events);
-
+    .compact()
     // Remove duplicate records from an array
-    const uniqueEvents = _.uniqBy(compactEvents, 'email', 'surveyId');
+    .uniqBy('email', 'surveyId')
+    .value()
 
-    console.log(uniqueEvents);
+    console.log(events);
+    
     res.send({});
   })
 
