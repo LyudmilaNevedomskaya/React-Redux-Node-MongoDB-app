@@ -9,6 +9,12 @@ const surveyTemplate = require('../services/emailTemplates/surveyTemplate');
 const Survey = mongoose.model('surveys');
 
 module.exports = app => {
+  app.get('/api/surveys', requireLogin, async (req, res) => {
+    const surveys = await Survey.find({ _user: req.user.id });
+
+    res.send(surveys);
+  })
+
   app.get('/api/surveys/:surveyId/:choice', (req, res) => {
     res.send('Thanks for voting!!!')
   });
@@ -22,7 +28,7 @@ module.exports = app => {
     //     return { email: event.email, surveyId: match.surveyId, choice: match.choice };
     //   }
     // });
-    
+
     // // Remove all elements from the array that are undefined
     // const compactEvents = _.compact(events);
 
@@ -31,30 +37,30 @@ module.exports = app => {
 
     //REFACTORING USING LODASH CHAIN HELPER
     _.chain(req.body)
-    .map((event) => {
-      const match = p.test(new URL(event.url).pathname);
-      if (match) {
-        return { email: event.email, surveyId: match.surveyId, choice: match.choice };
-      }
-    })
-    // Remove all elements from the array that are undefined
-    .compact()
-    // Remove duplicate records from an array
-    .uniqBy('email', 'surveyId')
-    .each(({ surveyId, email, choice }) => {
-      Survey.updateOne({
-        _id: surveyId,
-        recipients: {
-          $elemMatch: {email: email, responded: false}
+      .map((event) => {
+        const match = p.test(new URL(event.url).pathname);
+        if (match) {
+          return { email: event.email, surveyId: match.surveyId, choice: match.choice };
         }
-      }, {
-        $inc: { [choice]: 1 },
-        $set: { 'recipients.$.responded': true },
-        lastResponded: new Date()
-      }).exec();
-    })
-    .value()
-    
+      })
+      // Remove all elements from the array that are undefined
+      .compact()
+      // Remove duplicate records from an array
+      .uniqBy('email', 'surveyId')
+      .each(({ surveyId, email, choice }) => {
+        Survey.updateOne({
+          _id: surveyId,
+          recipients: {
+            $elemMatch: { email: email, responded: false }
+          }
+        }, {
+          $inc: { [choice]: 1 },
+          $set: { 'recipients.$.responded': true },
+          lastResponded: new Date()
+        }).exec();
+      })
+      .value()
+
     res.send({});
   })
 
